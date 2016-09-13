@@ -61,7 +61,7 @@ public class AnnotatedClassActionResolver implements ActionResolver {
      * Configuration key used to lookup a comma-separated list of package names. The
      * packages (and their sub-packages) will be scanned for implementations of
      * ActionBean.
-     * @since Stripes 1.5 
+     * @since Stripes 1.5
      */
     public static final String PACKAGES = "ActionResolver.Packages";
 
@@ -338,22 +338,24 @@ public class AnnotatedClassActionResolver implements ActionResolver {
         }
 
         String bindingPath = getUrlBinding(beanClass);
+        final String contextPath = context.getServletContext().getContextPath() != null ?
+                context.getServletContext().getContextPath() : "";
+        final String attribName = contextPath + bindingPath;
         try {
             HttpServletRequest request = context.getRequest();
 
             if (beanClass.isAnnotationPresent(SessionScope.class)) {
-                bean = (ActionBean) request.getSession().getAttribute(bindingPath);
+                bean = (ActionBean) request.getSession().getAttribute(attribName);
 
                 if (bean == null) {
                     bean = makeNewActionBean(beanClass, context);
-                    request.getSession().setAttribute(bindingPath, bean);
+                    request.getSession().setAttribute(attribName, bean);
                 }
-            }
-            else {
-                bean = (ActionBean) request.getAttribute(bindingPath);
+            } else {
+                bean = (ActionBean) request.getAttribute(attribName);
                 if (bean == null) {
                     bean = makeNewActionBean(beanClass, context);
-                    request.setAttribute(bindingPath, bean);
+                    request.setAttribute(attribName, bean);
                 }
             }
 
@@ -374,7 +376,7 @@ public class AnnotatedClassActionResolver implements ActionResolver {
      * Calls {@link ActionBean#setContext(ActionBeanContext)} with the given {@code context} only if
      * necessary. Subclasses should use this method instead of setting the context directly because
      * it can be somewhat tricky to determine when it needs to be done.
-     * 
+     *
      * @param bean The bean whose context may need to be set.
      * @param context The context to pass to the bean if necessary.
      */
@@ -434,12 +436,12 @@ public class AnnotatedClassActionResolver implements ActionResolver {
      * the request, then return its value. This attribute is used to handle internal forwards, when
      * request parameters are merged and cannot reliably determine the desired event name.
      * </p>
-     * 
+     *
      * <p>
      * If that doesn't work, the value of a 'special' request parameter ({@link StripesConstants#URL_KEY_EVENT_NAME})
      * is checked to see if contains a single value matching an event name.
      * </p>
-     * 
+     *
      * <p>
      * Failing that, search for a parameter in the request whose name matches one of the named
      * events handled by the ActionBean. For example, if the ActionBean can handle events foo and
@@ -448,13 +450,13 @@ public class AnnotatedClassActionResolver implements ActionResolver {
      * matching names, the result of this method cannot be guaranteed and a
      * {@link StripesRuntimeException} will be thrown.
      * </p>
-     * 
+     *
      * <p>
      * Finally, if the event name cannot be determined through the parameter names and there is
      * extra path information beyond the URL binding of the ActionBean, it is checked to see if it
      * matches an event name.
      * </p>
-     * 
+     *
      * @param bean the ActionBean type bound to the request
      * @param context the ActionBeanContect for the current request
      * @return String the name of the event submitted, or null if none can be found
@@ -471,7 +473,7 @@ public class AnnotatedClassActionResolver implements ActionResolver {
      * Checks a special request attribute to get the event name. This attribute
      * may be set when the presence of the original request parameters on a
      * forwarded request makes it difficult to determine which event to fire.
-     * 
+     *
      * @param bean the ActionBean type bound to the request
      * @param context the ActionBeanContect for the current request
      * @return the name of the event submitted, or null if none can be found
